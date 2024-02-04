@@ -19,5 +19,3 @@ CREATE TABLE IF NOT EXISTS tables.users
     email      VARCHAR(250) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-SELECT * FROM tables.users;
