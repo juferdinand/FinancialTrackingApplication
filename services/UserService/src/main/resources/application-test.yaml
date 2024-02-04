@@ -1,0 +1,18 @@
+spring:
+  flyway:
+    enabled: false
+    locations: classpath:db
+  r2dbc:
+    url: r2dbc:pool:postgresql://localhost:5433/financedb
+    schema: tables
+    username: postgres
+    password: test
+    initialization-mode: always
+  sql:
+    init:
+      mode: always
+server:
+  port: 80
+logging:
+   level:
+     org.springframework.boot: DEBUG

@@ -12,16 +12,15 @@ class UserService(
     private val jwtUtils: JWTUtils
 ) {
     fun changeUserInformation(
-        userId: String,
         firstname: String,
         surname: String,
         email: String,
         access: String
     ): Mono<RequestResponse> {
-        checkToken(access, userId)?.let {
+        checkToken(access)?.let {
             return Mono.just(it)
         }
-        return userRepository.findUserByUserId(userId).flatMap {
+        return userRepository.findUserByUserId(jwtUtils.getSubjectFromToken(access)).flatMap {
             it.email = email
             it.firstname = firstname
             it.surname = surname
@@ -31,36 +30,62 @@ class UserService(
                     statusCode = "0",
                     message = "User information changed"
                 )
+            }.onErrorResume {
+                Mono.just(
+                    RequestResponse(
+                        success = false,
+                        statusCode = "2",
+                        message = "Error while changing user information"
+                    )
+                )
             }
+        }.switchIfEmpty(
+            Mono.just(
+                RequestResponse(
+                    success = false,
+                    statusCode = "1",
+                    message = "User not found"
+                )
+            )
+        ).onErrorResume {
+            Mono.just(
+                RequestResponse(
+                    success = false,
+                    statusCode = "2",
+                    message = "Error while changing user information"
+                )
+            )
         }
     }
 
-    fun deleteUser(userId: String, access: String): Mono<RequestResponse> {
-        checkToken(access, userId)?.let {
+    fun deleteUser(access: String): Mono<RequestResponse> {
+        checkToken(access)?.let {
             return Mono.just(it)
         }
-        return userRepository.deleteById(userId).then(Mono.fromCallable {
-            RequestResponse(
-                success = true,
-                statusCode = "0",
-                message = "User deleted"
-            )
-        })
+        return userRepository.deleteById(jwtUtils.getSubjectFromToken(access))
+            .then(Mono.fromCallable {
+                RequestResponse(
+                    success = true,
+                    statusCode = "0",
+                    message = "User deleted"
+                )
+            }).onErrorResume {
+                Mono.just(
+                    RequestResponse(
+                        success = false,
+                        statusCode = "2",
+                        message = "Error while changing user information"
+                    )
+                )
+            }
     }
 
-    fun checkToken(access: String, userId: String?): RequestResponse? {
+    fun checkToken(access: String): RequestResponse? {
         if (!jwtUtils.isTokenValid(access)) {
             return RequestResponse(
                 success = false,
                 statusCode = "4",
                 message = "Token expired"
-            )
-        }
-        if (userId != null && jwtUtils.getSubjectFromToken(access) != userId) {
-            return RequestResponse(
-                success = false,
-                statusCode = "5",
-                message = "Token does not match user"
             )
         }
         return null

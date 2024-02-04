@@ -1,0 +1,10 @@
+type Mutation{
+    changeUserInformation(firstName: String, surname: String, email: String): RequestResponse
+}
+
+type RequestResponse {
+    success: Boolean
+    statusCode:String
+    timestamp: String
+    message: String
+}

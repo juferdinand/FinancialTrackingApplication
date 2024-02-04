@@ -32,7 +32,6 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-	implementation("io.projectreactor:reactor-core:3.6.2")
 	implementation("com.netflix.graphql.dgs:graphql-dgs:8.2.5")
 	implementation("com.netflix.graphql.dgs:graphql-dgs-reactive:8.2.5")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -44,10 +43,12 @@ dependencies {
 	annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-testcontainers")
-	testImplementation("org.springframework.amqp:spring-rabbit-test")
 	testImplementation("org.testcontainers:junit-jupiter")
 	testImplementation("org.testcontainers:postgresql")
-	testImplementation("org.testcontainers:rabbitmq")
+	testImplementation("org.testcontainers:r2dbc")
+	testImplementation("org.flywaydb:flyway-core:10.7.1")
+	testImplementation("org.flywaydb:flyway-database-postgresql:10.7.1")
+	testImplementation("org.postgresql:postgresql:42.7.1")
 }
 
 tasks.withType<KotlinCompile> {

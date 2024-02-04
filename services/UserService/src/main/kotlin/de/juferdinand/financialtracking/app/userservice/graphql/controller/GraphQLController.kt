@@ -13,19 +13,17 @@ class GraphQLController(private val userService: UserService) {
 
     @DgsMutation(field = "changeUserInformation")
     fun changeUserInformation(
-        @InputArgument userId: String,
         @InputArgument firstname: String,
         @InputArgument surname: String,
         @InputArgument email: String,
         @CookieValue access: String
     ): Mono<RequestResponse> {
-        return userService.changeUserInformation(userId, firstname, surname, email, access)
+        return userService.changeUserInformation(firstname, surname, email, access)
     }
 
     fun deleteUser(
-        @InputArgument userId: String,
         @CookieValue access: String
     ): Mono<RequestResponse> {
-        return userService.deleteUser(userId, access)
+        return userService.deleteUser(access)
     }
 }
