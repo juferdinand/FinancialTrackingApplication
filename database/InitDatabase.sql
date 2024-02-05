@@ -16,6 +16,9 @@ CREATE TABLE IF NOT EXISTS tables.users
     firstname  VARCHAR(250) NOT NULL,
     surname    VARCHAR(250) NOT NULL,
     password   VARCHAR(250),
+    token VARCHAR(8),
+    token_valid_until TIMESTAMP,
+    verified   BOOLEAN DEFAULT FALSE,
     email      VARCHAR(250) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
