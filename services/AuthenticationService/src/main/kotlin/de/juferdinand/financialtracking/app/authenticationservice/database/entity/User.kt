@@ -39,7 +39,13 @@ data class User(
     var verified: Boolean = false,
 
     @Column("created_at")
-    var createdAt: LocalDate? = null
+    var createdAt: LocalDate? = null,
+
+    @Column("avatar_url")
+    var avatarUrl: String = "default_avatar.png", //TODO: change to default avatar
+
+    @Column("version")
+    var version : Long = 0
 
 ) : Persistable<String> {
 
