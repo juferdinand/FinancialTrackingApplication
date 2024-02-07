@@ -11,8 +11,11 @@ import de.juferdinand.financialtracking.app.authenticationservice.graphql.util.T
 import de.mkammerer.argon2.Argon2
 import de.mkammerer.argon2.Argon2Factory
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.http.ResponseCookie
+import org.springframework.http.server.reactive.ServerHttpRequest
 import org.springframework.http.server.reactive.ServerHttpResponse
 import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.server.ServerRequest
 import reactor.core.publisher.Mono
 import java.time.LocalDate
 
@@ -32,8 +35,7 @@ class AuthService(
         email: String,
         password: String,
         firstname: String,
-        surname: String,
-        birth: String
+        surname: String
     ): Mono<RequestResponse> {
         return userRepository.findByEmail(email)
             .flatMap {
@@ -54,7 +56,7 @@ class AuthService(
                                 email = email,
                                 password = hashedPassword,
                                 token = token,
-                                tokenValidUntil = LocalDate.now().plusDays(1)
+                                tokenValidUntil = LocalDate.now().plusDays(1),
                             )
                             userRepository.save(user).doOnSuccess {
                                 applicationEventPublisher.publishEvent(
@@ -69,6 +71,7 @@ class AuthService(
                         }
                 }
             ).onErrorResume { e ->
+                e.printStackTrace()
                 if (e is TokenCreationException) {
                     Mono.just(
                         RequestResponse(
@@ -95,20 +98,21 @@ class AuthService(
         serverHttpResponse: ServerHttpResponse
     ): Mono<RequestResponse> {
         return userRepository.findByEmail(email).flatMap { user ->
+            if (!user.verified) {
+                return@flatMap Mono.just(
+                    RequestResponse(
+                        success = false,
+                        statusCode = "12",
+                        message = "User is not verified"
+                    )
+                )
+            }
             Mono.just(argon2.verify(user.password, password.toByteArray())).flatMap { verified ->
                 if (verified) {
-                    val refreshMono = Mono.fromRunnable<Unit> {
-                        serverHttpResponse.cookies.add(
-                            "refresh",
-                            CookieHelper.createCookie(
-                                "refresh",
-                                jwtHelper.createRefreshJWT(user, refreshJWTMaxAge),
-                                refreshJWTMaxAge,
-                                httpOnly = true
-                            )
-                        )
-                    }
-                    Mono.`when`(createAccessCookie(user, serverHttpResponse), refreshMono).then(
+                    Mono.`when`(
+                        createAccessCookie(user, serverHttpResponse),
+                        createRefreshCookie(user, serverHttpResponse)
+                    ).then(
                         createSuccessResponse("User successfully logged in")
                     )
                 } else {
@@ -130,6 +134,7 @@ class AuthService(
                 )
             )
         ).onErrorResume {
+            it.printStackTrace()
             Mono.just(
                 RequestResponse(
                     success = false,
@@ -145,7 +150,7 @@ class AuthService(
         refresh: String
     ): Mono<RequestResponse> {
         return userRepository.findById(JWTHelper.getSubject(refresh)).flatMap { user ->
-            if (JWTHelper.getVersion(refresh) == user.version) {
+            if (JWTHelper.getVersion(refresh) != user.version) {
                 return@flatMap Mono.just(
                     RequestResponse(
                         success = false,
@@ -183,17 +188,7 @@ class AuthService(
         return userRepository.findById(JWTHelper.getSubject(refresh)).flatMap { user ->
             user.version++
             userRepository.save(user).then(
-                Mono.fromRunnable<Unit> {
-                    serverHttpResponse.cookies.add(
-                        "refresh",
-                        CookieHelper.createCookie(
-                            "refresh",
-                            "",
-                            refreshJWTMaxAge,
-                            httpOnly = true
-                        )
-                    )
-                }.then(
+                createRefreshCookie(user, serverHttpResponse).then(
                     createSuccessResponse("Token successfully revoked")
                 )
             )
@@ -216,8 +211,68 @@ class AuthService(
         }
     }
 
-    private fun createAccessCookie(user: User, serverHttpResponse: ServerHttpResponse): Mono<Unit> {
+    fun verifyUser(token: String): Mono<RequestResponse> {
+        return userRepository.findByToken(token).flatMap { user ->
+            if (user.tokenValidUntil!!.isAfter(LocalDate.now())) {
+                user.token = ""
+                user.tokenValidUntil = null
+                user.verified = true
+                userRepository.save(user).then(
+                    createSuccessResponse("User successfully verified")
+                )
+            } else {
+                Mono.just(
+                    RequestResponse(
+                        success = false,
+                        statusCode = "11",
+                        message = "Token is invalid"
+                    )
+                )
+            }
+        }.switchIfEmpty(
+            Mono.just(
+                RequestResponse(
+                    success = false,
+                    statusCode = "11",
+                    message = "Token is invalid"
+                )
+            )
+        ).onErrorResume {
+            it.printStackTrace()
+            Mono.just(
+                RequestResponse(
+                    success = false,
+                    statusCode = "7",
+                    message = "An unexpected error occurred while verifying user"
+                )
+            )
+        }
+    }
+
+    fun logoutUser(
+        serverHttpRequest: ServerRequest,
+        serverResponse: ServerHttpResponse,
+        refresh: String
+    ): Mono<RequestResponse> {
         return Mono.fromRunnable<Unit> {
+            serverHttpRequest.cookies().filter { it.key == "access" || it.key == "refresh" }.forEach {
+                serverResponse.addCookie(ResponseCookie.from(it.key, "").maxAge(0).build())
+            }
+        }.then(
+            createSuccessResponse("User successfully logged out")
+        ).onErrorResume {
+            Mono.just(
+                RequestResponse(
+                    success = false,
+                    statusCode = "7",
+                    message = "An unexpected error occurred while logging out user"
+                )
+            )
+        }
+    }
+
+    private fun createAccessCookie(user: User, serverHttpResponse: ServerHttpResponse): Mono<Unit> {
+        return Mono.fromRunnable {
             serverHttpResponse.cookies.add(
                 "access",
                 CookieHelper.createCookie(
@@ -225,6 +280,23 @@ class AuthService(
                     jwtHelper.createAccessJWT(user, accessJWTMaxAge),
                     accessJWTMaxAge,
                     httpOnly = false
+                )
+            )
+        }
+    }
+
+    private fun createRefreshCookie(
+        user: User,
+        serverHttpResponse: ServerHttpResponse
+    ): Mono<Unit> {
+        return Mono.fromRunnable<Unit> {
+            serverHttpResponse.cookies.add(
+                "refresh",
+                CookieHelper.createCookie(
+                    "refresh",
+                    jwtHelper.createRefreshJWT(user, refreshJWTMaxAge),
+                    refreshJWTMaxAge,
+                    httpOnly = true
                 )
             )
         }
@@ -239,5 +311,4 @@ class AuthService(
             )
         )
     }
-
 }

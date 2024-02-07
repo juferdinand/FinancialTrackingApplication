@@ -7,6 +7,6 @@ import org.springframework.context.annotation.Configuration
 @ConfigurationProperties(prefix = "spring.jwt")
 class SpringJWTConfiguration {
 
-    lateinit var secrets: Map<String, String>
+    var secrets: Map<String, String> = HashMap()
 
 }

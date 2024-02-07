@@ -5,13 +5,11 @@ import com.auth0.jwt.algorithms.Algorithm
 import de.juferdinand.financialtracking.app.authenticationservice.database.entity.User
 import de.juferdinand.financialtracking.app.authenticationservice.graphql.config.SpringJWTConfiguration
 import org.springframework.stereotype.Component
-import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 @Component
 class JWTHelper(private val springJWTConfiguration: SpringJWTConfiguration) {
-
-    private val sdf = SimpleDateFormat("dd-MM-yyyy HH:mm")
 
     fun createAccessJWT(user: User, maxAge: Long): String {
         val algorithm = Algorithm.HMAC512(springJWTConfiguration.secrets["access"])
@@ -38,7 +36,7 @@ class JWTHelper(private val springJWTConfiguration: SpringJWTConfiguration) {
             "firstname" to user.firstname,
             "surname" to user.surname,
             "email" to user.email,
-            "created" to sdf.format(user.createdAt),
+            "created" to user.createdAt!!.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
             "avatar" to user.avatarUrl
         )
     }
@@ -47,6 +45,7 @@ class JWTHelper(private val springJWTConfiguration: SpringJWTConfiguration) {
         fun getSubject(token: String): String {
             return JWT.decode(token).subject
         }
+
         fun getVersion(token: String): Long {
             return JWT.decode(token).getClaim("version").asLong()
         }

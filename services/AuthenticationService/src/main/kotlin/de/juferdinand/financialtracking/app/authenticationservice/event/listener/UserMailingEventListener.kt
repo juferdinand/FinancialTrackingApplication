@@ -1,19 +1,19 @@
 package de.juferdinand.financialtracking.app.authenticationservice.event.listener
 
-import de.juferdinand.financialtracking.app.authenticationservice.database.repo.UserRepository
 import de.juferdinand.financialtracking.app.authenticationservice.event.UserMailingEvent
+import de.juferdinand.financialtracking.app.authenticationservice.event.handler.MailHandler
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 
 @Component
-class UserMailingEventListener(private val userRepository: UserRepository) {
+class UserMailingEventListener(private val mailHandler: MailHandler) {
 
     @EventListener
-    fun sendMail(event: UserMailingEvent) {
+    fun sendMailEvent(event: UserMailingEvent) {
         event.user.flatMap { user ->
             Mono.fromCallable {
-                println("Sending mail to ${user.email}")
+                mailHandler.sendMail(user.email, user.token, user.tokenType)
             }
         }.subscribe()
     }

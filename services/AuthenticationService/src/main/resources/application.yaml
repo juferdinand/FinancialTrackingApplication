@@ -1,0 +1,30 @@
+spring:
+  jwt:
+    secrets:
+      access: ""
+      refresh: ""
+  r2dbc:
+    url: r2dbc:pool:postgresql://localhost:5432/financedb
+    username: postgres
+    password: test
+    properties:
+      lock_timeout: 40000
+      statement_timeout: 40000
+      idle_in_transaction_session_timeout: 40000
+      connectTimeout: PT55S
+  mail:
+    host:
+    port:
+    username:
+    password:
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+        transport:
+          protocol: smtp
+server:
+  port: 80

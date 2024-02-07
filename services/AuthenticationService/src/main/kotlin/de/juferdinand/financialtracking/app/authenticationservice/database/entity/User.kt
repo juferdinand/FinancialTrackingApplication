@@ -6,6 +6,7 @@ import org.springframework.data.domain.Persistable
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.*
 
 @Table(name = "users", schema = "tables")
@@ -30,7 +31,7 @@ data class User(
     var token: String,
 
     @Column("token_valid_until")
-    var tokenValidUntil: LocalDate,
+    var tokenValidUntil: LocalDate?,
 
     @Column("token_type")
     var tokenType: TokenType = TokenType.EMAIL_VERIFICATION,
@@ -39,7 +40,7 @@ data class User(
     var verified: Boolean = false,
 
     @Column("created_at")
-    var createdAt: LocalDate? = null,
+    var createdAt: LocalDateTime? = null,
 
     @Column("avatar_url")
     var avatarUrl: String = "default_avatar.png", //TODO: change to default avatar
