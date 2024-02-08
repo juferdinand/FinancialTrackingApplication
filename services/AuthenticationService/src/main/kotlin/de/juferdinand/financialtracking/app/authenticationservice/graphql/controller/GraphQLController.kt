@@ -12,6 +12,7 @@ import com.netflix.graphql.dgs.internal.DgsWebMvcRequestData
 import com.netflix.graphql.dgs.reactive.internal.DgsReactiveRequestData
 import de.juferdinand.financialtracking.app.authenticationservice.graphql.response.RequestResponse
 import de.juferdinand.financialtracking.app.authenticationservice.graphql.service.AuthService
+import de.juferdinand.financialtracking.app.authenticationservice.graphql.service.PasswordResetService
 import graphql.schema.DataFetchingEnvironment
 import org.springframework.http.server.reactive.ServerHttpRequest
 import org.springframework.http.server.reactive.ServerHttpResponse
@@ -23,7 +24,7 @@ import org.springframework.web.server.ServerWebExchange
 import reactor.core.publisher.Mono
 
 @DgsComponent
-class GraphQLController(private val authService: AuthService) {
+class GraphQLController(private val authService: AuthService, private val passwordResetService: PasswordResetService) {
 
     @DgsMutation
     fun registerUser(
@@ -52,8 +53,6 @@ class GraphQLController(private val authService: AuthService) {
         return authService.logoutUser(toServerHttpRequest(dfe),toServerHttpResponse(dfe), refresh)
     }
 
-
-
     @DgsMutation
     fun verifyUser(
         @InputArgument token: String
@@ -75,6 +74,28 @@ class GraphQLController(private val authService: AuthService) {
         @CookieValue refresh: String
     ): Mono<RequestResponse> {
         return authService.revokeToken(toServerHttpResponse(dfe), refresh)
+    }
+
+    @DgsQuery
+    fun requestPasswordReset(
+        email: String
+    ): Mono<RequestResponse> {
+        return passwordResetService.requestPasswordReset(email)
+    }
+
+    @DgsQuery
+    fun verifyTokenForPasswordReset(
+        token: String
+    ): Mono<RequestResponse> {
+        return passwordResetService.verifyTokenForPasswordReset(token)
+    }
+
+    @DgsMutation
+    fun resetPassword(
+        token: String,
+        password: String
+    ): Mono<RequestResponse> {
+        return passwordResetService.resetPassword(token, password)
     }
 
     private fun toServerHttpResponse(dfe: DataFetchingEnvironment): ServerHttpResponse {

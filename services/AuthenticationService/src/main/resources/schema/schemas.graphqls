@@ -2,12 +2,15 @@ type Mutation{
     registerUser(email:String, password:String,firstname:String, surname:String): RequestResponse
     revokeToken: RequestResponse
     verifyUser(token:String): RequestResponse
+    resetPassword(token:String, password:String): RequestResponse
 }
 
 type Query {
     loginUser(email:String, password:String): RequestResponse
     logoutUser: RequestResponse
     refreshToken: RequestResponse
+    requestPasswordReset(email:String): RequestResponse
+    verifyTokenForPasswordReset(token:String): RequestResponse
 }
 
 type RequestResponse {

@@ -13,7 +13,7 @@ class UserMailingEventListener(private val mailHandler: MailHandler) {
     fun sendMailEvent(event: UserMailingEvent) {
         event.user.flatMap { user ->
             Mono.fromCallable {
-                mailHandler.sendMail(user.email, user.token, user.tokenType)
+                mailHandler.sendMail(user.email, user.token!!, user.tokenType!!)
             }
         }.subscribe()
     }

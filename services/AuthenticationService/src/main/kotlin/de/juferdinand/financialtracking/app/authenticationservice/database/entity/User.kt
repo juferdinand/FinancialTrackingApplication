@@ -28,13 +28,13 @@ data class User(
     var password: String?,
 
     @Column("token")
-    var token: String,
+    var token: String?,
 
     @Column("token_valid_until")
-    var tokenValidUntil: LocalDate?,
+    var tokenValidUntil: LocalDateTime?,
 
     @Column("token_type")
-    var tokenType: TokenType = TokenType.EMAIL_VERIFICATION,
+    var tokenType: TokenType? = TokenType.EMAIL_VERIFICATION,
 
     @Column("verified")
     var verified: Boolean = false,

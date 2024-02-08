@@ -1,6 +1,7 @@
 package de.juferdinand.financialtracking.app.authenticationservice.graphql.service
 
 import de.juferdinand.financialtracking.app.authenticationservice.database.entity.User
+import de.juferdinand.financialtracking.app.authenticationservice.database.enum.TokenType
 import de.juferdinand.financialtracking.app.authenticationservice.database.repo.UserRepository
 import de.juferdinand.financialtracking.app.authenticationservice.event.UserMailingEvent
 import de.juferdinand.financialtracking.app.authenticationservice.graphql.exception.TokenCreationException
@@ -12,12 +13,12 @@ import de.mkammerer.argon2.Argon2
 import de.mkammerer.argon2.Argon2Factory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.ResponseCookie
-import org.springframework.http.server.reactive.ServerHttpRequest
 import org.springframework.http.server.reactive.ServerHttpResponse
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.server.ServerRequest
 import reactor.core.publisher.Mono
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Service
 class AuthService(
@@ -43,7 +44,7 @@ class AuthService(
                     RequestResponse(
                         success = false,
                         statusCode = "6",
-                        message = "User with email $email already exists"
+                        message = "User with this email already exists"
                     )
                 )
             }.switchIfEmpty(
@@ -56,13 +57,13 @@ class AuthService(
                                 email = email,
                                 password = hashedPassword,
                                 token = token,
-                                tokenValidUntil = LocalDate.now().plusDays(1),
+                                tokenValidUntil = LocalDateTime.now().plusDays(1),
                             )
                             userRepository.save(user).doOnSuccess {
                                 applicationEventPublisher.publishEvent(
                                     UserMailingEvent(
                                         this,
-                                        Mono.just(user)
+                                        Mono.just(it)
                                     )
                                 )
                             }.flatMap {
@@ -129,8 +130,8 @@ class AuthService(
             Mono.just(
                 RequestResponse(
                     success = false,
-                    statusCode = "9",
-                    message = "User with email $email does not exist"
+                    statusCode = "5",
+                    message = "Email or password is incorrect"
                 )
             )
         ).onErrorResume {
@@ -166,11 +167,12 @@ class AuthService(
             Mono.just(
                 RequestResponse(
                     success = false,
-                    statusCode = "7",
-                    message = "An unexpected error occurred while refreshing token"
+                    statusCode = "9",
+                    message = "User not found or refresh token is invalid"
                 )
             )
         ).onErrorResume {
+            it.printStackTrace()
             Mono.just(
                 RequestResponse(
                     success = false,
@@ -186,6 +188,15 @@ class AuthService(
         refresh: String
     ): Mono<RequestResponse> {
         return userRepository.findById(JWTHelper.getSubject(refresh)).flatMap { user ->
+            if (JWTHelper.getVersion(refresh) != user.version) {
+                return@flatMap Mono.just(
+                    RequestResponse(
+                        success = false,
+                        statusCode = "10",
+                        message = "Refresh token is invalid"
+                    )
+                )
+            }
             user.version++
             userRepository.save(user).then(
                 createRefreshCookie(user, serverHttpResponse).then(
@@ -196,8 +207,8 @@ class AuthService(
             Mono.just(
                 RequestResponse(
                     success = false,
-                    statusCode = "7",
-                    message = "An unexpected error occurred while revoking token"
+                    statusCode = "9",
+                    message = "User not found or refresh token is invalid"
                 )
             )
         ).onErrorResume {
@@ -213,22 +224,30 @@ class AuthService(
 
     fun verifyUser(token: String): Mono<RequestResponse> {
         return userRepository.findByToken(token).flatMap { user ->
-            if (user.tokenValidUntil!!.isAfter(LocalDate.now())) {
-                user.token = ""
-                user.tokenValidUntil = null
-                user.verified = true
-                userRepository.save(user).then(
-                    createSuccessResponse("User successfully verified")
-                )
-            } else {
-                Mono.just(
+            if (user.tokenValidUntil!!.isBefore(LocalDateTime.now())) {
+                return@flatMap Mono.just(
                     RequestResponse(
                         success = false,
                         statusCode = "11",
                         message = "Token is invalid"
                     )
                 )
+            } else if (user.tokenType != TokenType.EMAIL_VERIFICATION) {
+                return@flatMap Mono.just(
+                    RequestResponse(
+                        success = false,
+                        statusCode = "16",
+                        message = "Token is not an email verification token"
+                    )
+                )
             }
+            user.token = null
+            user.tokenValidUntil = null
+            user.tokenType = null
+            user.verified = true
+            userRepository.save(user).then(
+                createSuccessResponse("User successfully verified")
+            )
         }.switchIfEmpty(
             Mono.just(
                 RequestResponse(
@@ -237,7 +256,7 @@ class AuthService(
                     message = "Token is invalid"
                 )
             )
-        ).onErrorResume {
+        ).onErrorResume{
             it.printStackTrace()
             Mono.just(
                 RequestResponse(
@@ -255,9 +274,10 @@ class AuthService(
         refresh: String
     ): Mono<RequestResponse> {
         return Mono.fromRunnable<Unit> {
-            serverHttpRequest.cookies().filter { it.key == "access" || it.key == "refresh" }.forEach {
-                serverResponse.addCookie(ResponseCookie.from(it.key, "").maxAge(0).build())
-            }
+            serverHttpRequest.cookies().filter { it.key == "access" || it.key == "refresh" }
+                .forEach {
+                    serverResponse.addCookie(ResponseCookie.from(it.key, "").maxAge(0).build())
+                }
         }.then(
             createSuccessResponse("User successfully logged out")
         ).onErrorResume {
