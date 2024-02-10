@@ -1,5 +1,8 @@
 package de.juferdinand.financialtracking.app.authenticationservice.graphql.helper
 
+import io.netty.handler.codec.http.cookie.Cookie
+import io.netty.handler.codec.http.cookie.CookieHeaderNames
+import org.springframework.boot.web.server.Cookie.SameSite
 import org.springframework.http.ResponseCookie
 
 class CookieHelper {
@@ -14,6 +17,7 @@ class CookieHelper {
             return ResponseCookie.from(name, value)
                 .maxAge(maxAge)
                 .secure(secure)
+                .sameSite(CookieHeaderNames.SameSite.Lax.name)
                 .httpOnly(httpOnly)
                 .build()
         }

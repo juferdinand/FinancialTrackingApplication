@@ -11,9 +11,9 @@ export const LOGIN_USER = gql`
     }
 `;
 
-export const REGISTER_USER = gql`
-    mutation RegisterUser($email: String!, $firstname:String!, $surname:String!, $password: String!) {
-        registerUser(email: $email, firstname: $firstname, surname: $surname password: $password) {
+export const REQUEST_PASSWORD_RESET = gql`
+    query RequestPasswordReset($email: String!) {
+        requestPasswordReset(email: $email) {
             success
             statusCode
             message

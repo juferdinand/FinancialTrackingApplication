@@ -29,3 +29,5 @@ const isTokenExpired = (token:string) => {
         return true;
     }
 };
+
+export default ProtectedRoute;

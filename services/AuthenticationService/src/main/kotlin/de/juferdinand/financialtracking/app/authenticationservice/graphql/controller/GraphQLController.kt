@@ -33,7 +33,7 @@ class GraphQLController(private val authService: AuthService, private val passwo
         @InputArgument firstname: String,
         @InputArgument surname: String,
     ): Mono<RequestResponse> {
-        return authService.registerUser(email, password, firstname, surname)
+        return authService.registerUser(email.lowercase(), password, firstname, surname)
     }
 
     @DgsQuery

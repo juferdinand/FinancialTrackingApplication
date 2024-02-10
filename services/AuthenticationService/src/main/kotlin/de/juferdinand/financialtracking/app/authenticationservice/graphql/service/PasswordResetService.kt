@@ -44,7 +44,7 @@ class PasswordResetService(
             }
             tokenGenerator.generateUniqueToken(8).flatMap { token ->
                 user.token = token
-                user.tokenValidUntil = LocalDateTime.now().plusDays(1)
+                user.tokenValidUntil = LocalDateTime.now().plusMinutes(15)
                 user.tokenType = TokenType.PASSWORD_RESET
                 userRepository.save(user).doOnSuccess {
                     applicationEventPublisher.publishEvent(
