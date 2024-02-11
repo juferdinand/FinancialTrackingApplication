@@ -8,22 +8,35 @@ import {createApolloClient} from "./graphql/ApolloClient";
 import Dashboard from "./components/Dashboard";
 import Verify from "./components/Verify";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RedirectRoute from "./components/RedirectRoute";
+import ResetPassword from "./components/ResetPassword";
 
 function App() {
     return (
         <BrowserRouter>
             <Routes>
+                <Route element={<RedirectRoute/>}>
                 <Route path='/' element={
-                    <ApolloProvider client={createApolloClient("http://localdev.de:80/graphql")}>
+                    <ApolloProvider client={createApolloClient("https://localdev.de/graphql")}>
                         <Login/>
                     </ApolloProvider>}/>
+                </Route>
+                <Route path='/reset-password' element={
+                    <ApolloProvider client={createApolloClient("https://localdev.de/graphql")}>
+                        <ResetPassword/>
+                    </ApolloProvider>
+                }/>
                 <Route path='/verify' element={
-                    <ApolloProvider client={createApolloClient("http://localdev.de:80/graphql")}>
+                    <ApolloProvider client={createApolloClient("https://localdev.de/graphql")}>
                         <Verify/>
                     </ApolloProvider>
                 }/>
                 <Route element={<ProtectedRoute/>}>
-                    <Route path='/dashboard' element={<Dashboard/>}/>
+                    <Route path='/dashboard' element={
+                        <ApolloProvider client={createApolloClient("https://localdev.de/graphql")}>
+                            <Dashboard/>
+                        </ApolloProvider>
+                    }/>
                 </Route>
             </Routes>
         </BrowserRouter>

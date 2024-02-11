@@ -16,10 +16,23 @@ const Login = () => {
     const [repeatPassword, setRepeatPassword] = useState('');
     const [formType, setFormType] = useState('login'); // 'login', 'register', 'forgotPassword'
     const navigate = useNavigate();
+    const [loginSuccessful, setLoginSuccessful] = useState(false);
     const [cookies] = useCookies(['access']);
 
+    if (cookies.access) {
+
+    }
+
     useEffect(() => {
+        if (loginSuccessful) {
+            navigate('/dashboard');
+        }
+    }, [loginSuccessful, navigate]);
+
+    useEffect(() => {
+
         const defaultRegister = searchParams.get('register');
+        const defaultForgotPassword = searchParams.get('forgot-password');
         if (defaultRegister && formType !== 'register') {
             setFormType('register');
 
@@ -29,6 +42,15 @@ const Login = () => {
 
             // Aktualisiere die URL ohne 'register', ohne die Seite neu zu laden
             navigate(`${window.location.pathname}?${newSearchParams.toString()}`, {replace: true});
+        }else if (defaultForgotPassword && formType !== 'forgotPassword') {
+            setFormType('forgotPassword');
+
+            // Kopiere alle aktuellen Suchparameter außer 'forgot-password'
+            const newSearchParams = new URLSearchParams(searchParams);
+            newSearchParams.delete('forgot-password');
+
+            // Aktualisiere die URL ohne 'forgot-password', ohne die Seite neu zu laden
+            navigate(`${window.location.pathname}?${newSearchParams.toString()}`, {replace: true});
         }
     }, [searchParams, formType, navigate]);
 
@@ -37,9 +59,7 @@ const Login = () => {
         variables: {email, password},
         onCompleted: (data) => {
             if (data.loginUser.success) {
-
-                console.log(cookies);
-                navigate('/dashboard');
+                setLoginSuccessful(true);
             } else if (data.loginUser.statusCode === '12') {
                 alert("You aren't verified yet");
             } else if (data.loginUser.statusCode === '5') {
@@ -86,14 +106,20 @@ const Login = () => {
         if (formType === 'login') {
             await executeLogin();
         } else if (formType === 'register') {
+            if (password.length < 8) {
+                alert('Password must be at least 8 characters long');
+                return;
+            }
             if (password !== repeatPassword) {
                 alert('Passwords do not match');
                 return;
             }
             await executeRegister();
+            setFormType('login');
         } else if (formType === 'forgotPassword') {
             // Logik für das Formular "Passwort vergessen"
             await executeRequestPasswordReset();
+            setFormType('login');
             // Fügen Sie hier Ihre Logik zum Zurücksetzen des Passworts hinzu
         }
     };

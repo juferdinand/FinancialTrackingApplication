@@ -20,3 +20,14 @@ export const VERIFY_USER = gql `
         }
     }
 `;
+
+export const RESET_PASSWORD = gql `
+    mutation ResetPassword($token: String!, $password: String!) {
+        resetPassword(token: $token, password: $password) {
+            success
+            statusCode
+            message
+            timestamp
+        }
+    }
+`;

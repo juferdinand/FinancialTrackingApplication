@@ -11,13 +11,13 @@ class CookieHelper {
             name: String,
             value: String,
             maxAge: Long,
-            secure: Boolean= false,
+            secure: Boolean= true,
             httpOnly: Boolean
         ): ResponseCookie {
             return ResponseCookie.from(name, value)
                 .maxAge(maxAge)
                 .secure(secure)
-                .sameSite(CookieHeaderNames.SameSite.Lax.name)
+                .sameSite(CookieHeaderNames.SameSite.None.name)
                 .httpOnly(httpOnly)
                 .build()
         }

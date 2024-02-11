@@ -3,12 +3,13 @@ import {Outlet, Navigate } from 'react-router-dom';
 import { useCookies } from 'react-cookie';
 import {jwtDecode} from "jwt-decode";
 
-const ProtectedRoute = () => {
+const RedirectRoute = () => {
     const [cookies] = useCookies(['access']);
     const isExpired = isTokenExpired(cookies.access);
 
-    if (isExpired) {
-        return <Navigate to="/" />;
+    console.log(isExpired);
+    if (!isExpired) {
+        return <Navigate to="/dashboard" />;
     }
     return <Outlet />;
 }
@@ -31,4 +32,4 @@ const isTokenExpired = (token:string) => {
     }
 };
 
-export default ProtectedRoute;
+export default RedirectRoute;

@@ -12,7 +12,7 @@ class WebConfig {
     @Bean
     fun corsFilter(): CorsWebFilter {
         val corsConfig = CorsConfiguration()
-        corsConfig.addAllowedOrigin("http://localhost:3000")
+        corsConfig.addAllowedOrigin("https://localdev.de:3000")
         corsConfig.addAllowedHeader("*")
         corsConfig.addAllowedMethod("POST")
         corsConfig.allowCredentials = true

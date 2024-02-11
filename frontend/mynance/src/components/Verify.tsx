@@ -9,7 +9,7 @@ const Verify = () => {
     const token = searchParams.get('token');
     const [verificationStatus, setVerificationStatus] = useState('loading'); // 'loading', 'success', 'error'
 
-    const [executeVerify, { loading }] = useMutation(VERIFY_USER, {
+    const [executeVerify] = useMutation(VERIFY_USER, {
         variables: { token },
         onCompleted: (data) => {
             if (data.verifyUser.success) {
@@ -33,7 +33,7 @@ const Verify = () => {
         <div>
             {verificationStatus === 'loading' && <p>Your account is being verified...</p>}
             {verificationStatus === 'success' && (
-                <p>Your account has been verified. You can now <a href="/login">log in</a>.</p>
+                <p>Your account has been verified. You can now <a href="/">log in</a>.</p>
             )}
             {verificationStatus === 'invalid-token' && (
                 <p>Invalid or expired token. Please register again. Wanna try again? <Link to="/?register=true">Click here</Link>.</p>

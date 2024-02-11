@@ -17,7 +17,6 @@ import org.springframework.http.server.reactive.ServerHttpResponse
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.server.ServerRequest
 import reactor.core.publisher.Mono
-import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Service
@@ -29,8 +28,8 @@ class AuthService(
 ) {
     private val argon2: Argon2 = Argon2Factory.create()
 
-    private val accessJWTMaxAge = 60 * 15.toLong()
-    private val refreshJWTMaxAge = 60 * 60 * 24 * 30.toLong()
+    private val accessJWTMaxAge = 900000L
+    private val refreshJWTMaxAge = 2592000000L
 
     fun registerUser(
         email: String,
@@ -134,7 +133,7 @@ class AuthService(
                     message = "Email or password is incorrect"
                 )
             )
-        ).onErrorResume     {
+        ).onErrorResume {
             it.printStackTrace()
             Mono.just(
                 RequestResponse(
@@ -256,7 +255,7 @@ class AuthService(
                     message = "Token is invalid"
                 )
             )
-        ).onErrorResume{
+        ).onErrorResume {
             it.printStackTrace()
             Mono.just(
                 RequestResponse(
@@ -298,7 +297,7 @@ class AuthService(
                 CookieHelper.createCookie(
                     "access",
                     jwtHelper.createAccessJWT(user, accessJWTMaxAge),
-                    accessJWTMaxAge,
+                    60 * 15,
                     httpOnly = false
                 )
             )
@@ -315,7 +314,7 @@ class AuthService(
                 CookieHelper.createCookie(
                     "refresh",
                     jwtHelper.createRefreshJWT(user, refreshJWTMaxAge),
-                    refreshJWTMaxAge,
+                    60 * 60 * 24 * 30,
                     httpOnly = true
                 )
             )
