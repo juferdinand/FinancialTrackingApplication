@@ -9,10 +9,10 @@ import java.time.LocalDateTime
 
 @Component
 @EnableScheduling
-class DeleteInvalidUser(private val userRepository: UserRepository) {
+class ExpiredTokenTask(private val userRepository: UserRepository) {
 
     @Scheduled(cron = "0 0 0 * * ?")
-    fun deleteInvalidUser() {
+    fun handleUserWithExpiredToken() {
         userRepository.findAllByVerifiedIsFalseAndTokenValidUntilBefore(LocalDateTime.now())
             .map { user ->
                 if (user.tokenType == TokenType.EMAIL_VERIFICATION) {

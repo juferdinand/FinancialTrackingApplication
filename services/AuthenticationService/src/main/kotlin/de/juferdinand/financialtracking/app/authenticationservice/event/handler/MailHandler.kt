@@ -20,7 +20,7 @@ class MailHandler(private val javaMailSender: JavaMailSender) {
         mailMessageHelper.setText(
             mailTemplate.replace(
                 "%button-url%",
-                "placeholder-will-be-replace-with-url/verify?token=$token"
+                "placeholder-will-be-replace-with-url/${tokenType.path}?token=$token"
             ) , true
         )
         javaMailSender.send(mailMessageHelper.mimeMessage)
