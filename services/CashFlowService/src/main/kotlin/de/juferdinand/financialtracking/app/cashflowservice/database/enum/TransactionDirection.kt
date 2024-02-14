@@ -1,5 +1,5 @@
 package de.juferdinand.financialtracking.app.cashflowservice.database.enum
 
-enum class TransactionType {
+enum class TransactionDirection {
     INCOME, EXPENSE
 }

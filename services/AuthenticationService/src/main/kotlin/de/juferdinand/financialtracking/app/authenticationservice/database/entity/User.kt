@@ -50,6 +50,6 @@ data class User(
 
 ) : Persistable<String> {
 
-    override fun getId(): String? = userId
+    override fun getId(): String = userId
     override fun isNew(): Boolean = createdAt == null
 }

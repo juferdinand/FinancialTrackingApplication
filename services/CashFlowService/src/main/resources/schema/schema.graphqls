@@ -1,0 +1,69 @@
+type Mutation{
+    addTransaction(description:String,amount:BigDecimal!, transactionType:Int, transactionDirection:TransactionDirection!):RequestResponse
+    removeTransaction(transactionId:String):RequestResponse
+
+    addPeriodicTransaction(description:String,amount:BigDecimal!, transactionType:Int, transactionDirection:TransactionDirection!, period:Period!, startDate:String, endDate:String):RequestResponse
+    deactivatePeriodicTransaction(periodicTransactionId:String):RequestResponse
+    activatePeriodicTransaction(periodicTransactionId:String):RequestResponse
+}
+
+type Query {
+    getTransactions:RequestResponse
+    getPeriodicTransactions:RequestResponse
+    getTransactionTypes:RequestResponse
+
+    getTransaction(transactionId:String):RequestResponse
+    getPeriodicTransaction(periodicTransactionId:String):RequestResponse
+}
+
+
+
+type RequestResponse {
+    success: Boolean
+    statusCode:String
+    timestamp: String
+    message: String
+}
+
+type PeriodicTransaction {
+    periodicTransactionId: String
+    description: String
+    amount: BigDecimal
+    transactionType: TransactionType
+    period: Period
+    transactionDirection: TransactionDirection
+    startDate: String
+    endDate: String
+    createdDate: String
+    active: Boolean
+    transactions: [Transaction]
+}
+
+type Transaction {
+    id: String
+    description: String
+    amount: BigDecimal!
+    transactionType: TransactionType
+    transactionDirection: TransactionDirection
+    transactionDate: String
+}
+
+type TransactionType {
+    id: Int
+    name: String
+    icon:String
+}
+
+enum TransactionDirection {
+    INCOME
+    EXPENSE
+}
+
+enum Period {
+    DAILY
+    WEEKLY
+    MONTHLY
+    YEARLY
+}
+
+scalar BigDecimal

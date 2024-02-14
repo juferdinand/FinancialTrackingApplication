@@ -1,22 +1,22 @@
 package de.juferdinand.financialtracking.app.cashflowservice.database.converter
 
 import de.juferdinand.financialtracking.app.cashflowservice.database.enum.Period
-import de.juferdinand.financialtracking.app.cashflowservice.database.enum.TransactionType
+import de.juferdinand.financialtracking.app.cashflowservice.database.enum.TransactionDirection
 import org.springframework.core.convert.converter.Converter
 import org.springframework.data.convert.ReadingConverter
 import org.springframework.data.convert.WritingConverter
 
 @WritingConverter
-class TransactionTypeWriteConverter : Converter<TransactionType, String> {
-    override fun convert(tokenType: TransactionType): String {
+class TransactionTypeWriteConverter : Converter<TransactionDirection, String> {
+    override fun convert(tokenType: TransactionDirection): String {
         return tokenType.name
     }
 }
 
 @ReadingConverter
-class TransactionTypeReadConverter : Converter<String, TransactionType> {
-    override fun convert(tokenType: String): TransactionType {
-        return TransactionType.valueOf(tokenType)
+class TransactionTypeReadConverter : Converter<String, TransactionDirection> {
+    override fun convert(tokenType: String): TransactionDirection {
+        return TransactionDirection.valueOf(tokenType)
     }
 }
 
